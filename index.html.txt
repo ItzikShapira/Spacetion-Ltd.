@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ספותישן בע"מ - טיסות מהספה לכל העולם</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(to bottom, #d0ebff, #f9fafb);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    #world-map {
+      max-width: 100%;
+      height: auto;
+      cursor: pointer;
+    }
+    .destination-dot {
+      fill: #2563eb;
+      stroke: white;
+      stroke-width: 2px;
+      transition: fill 0.3s;
+    }
+    .destination-dot:hover {
+      fill: #facc15;
+      cursor: pointer;
+    }
+    #infoBox {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      max-width: 300px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgb(0 0 0 / 0.15);
+      padding: 15px 20px;
+      display: none;
+      z-index: 9999;
+      direction: rtl;
+      font-size: 14px;
+      color: #1e40af;
+      font-weight: 600;
+    }
+    #infoBox button {
+      margin-top: 12px;
+      background: #f59e0b;
+      border: none;
+      color: black;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 8px;
+      width: 100%;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #infoBox button:hover {
+      background-color: #d97706;
+    }
+    header nav a:hover {
+      text-decoration: underline;
+    }
+    /* לוח טיסות */
+    table {
+      direction: rtl;
+    }
+    /* כפתור הדפסה */
+    .print-btn {
+      background: #2563eb;
+      color: white;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      margin-top: 8px;
+      width: 100%;
+      transition: background-color 0.3s;
+    }
+    .print-btn:hover {
+      background: #1d4ed8;
+    }
+    /* מודאל כרטיס */
+    #ticketModal, #printPointsModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #ticketContent, #pointsContent {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      direction: rtl;
+      color: #1e40af;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgb(0 0 0 / 0.2);
+    }
+    #closeTicket, #closePoints {
+      margin-top: 15px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: background-color 0.3s;
+    }
+    #closeTicket:hover, #closePoints:hover {
+      background: #1d4ed8;
+    }
+    /* קו חיבור בין יעדים */
+    #connectionLine {
+      stroke: #f59e0b;
+      stroke-width: 4;
+      pointer-events: none;
+    }
+    #lineInfo {
+      margin-top: 12px;
+      font-weight: 700;
+      color: #1e40af;
+      text-align: center;
+    }
+  </style>
+</head>
+<body class="text-gray-800">
+
+<header class="bg-blue-700 text-white sticky top-0 z-50 shadow-md">
+  <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
+    <h1 class="text-3xl font-bold select-none">✈️ ספותישן בע"מ</h1>
+    <nav class="space-x-6 space-x-reverse text-lg">
+      <a href="#home" class="hover:underline">דף הבית</a>
+      <a href="#flights" class="hover:underline">לוח טיסות</a>
+      <a href="#map" class="hover:underline">מפת יעדים</a>
+      <a href="#about" class="hover:underline">על החברה</a>
+      <a href="#frequent" class="hover:underline">נוסע מתמיד</a>
+      <a href="#booking" class="hover:underline">הזמנת טיסה</a>
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-8">
+
+  <section id="home" class="text-center mb-16">
+    <h2 class="text-4xl font-extrabold text-blue-700 mb-3">טסים רחוק — בלי לזוז מהספה!</h2>
+    <p class="text-lg text-gray-700 max-w-xl mx-auto mb-6">
+      ברוכים הבאים לספותישן בע"מ — חברת התעופה היחידה בעולם שטסה בין חדרים, גגות ומטבחים, 
+      עם נוחות של ספה אמיתית וחוויות טיסה משעשעות.
+    </p>
+    <button onclick="scrollToSection('map')" class="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-8 rounded shadow-lg transition">
+      גלה את מפת היעדים האינטראקטיבית
+    </button>
+  </section>
+
+  <!-- לוח טיסות -->
+  <section id="flights" class="mb-16 bg-white rounded-xl shadow p-6">
+    <h3 class="text-2xl font-bold text-blue-700 mb-4">לוח טיסות</h3>
+    <table class="w-full table-fixed border-collapse border border-gray-300 text-center text-sm">
+      <thead class="bg-blue-200 font-semibold">
+        <tr>
+          <th class="border border-gray-300 p-2">קוד טיסה</th>
+          <th class="border border-gray-300 p-2">יעד</th>
+          <th class="border border-gray-300 p-2">המראה</th>
+          <th class="border border-gray-300 p-2">נחיתה</th>
+          <th class="border border-gray-300 p-2">סטטוס</th>
+        </tr>
+      </thead>
+      <tbody id="flightsBody" class="text-gray-700"></tbody>
+    </table>
+  </section>
+
+  <!-- מפת יעדים עם SVG ויכולת קישור בין נקודות -->
+  <section id="map" class="mb-16">
+    <h3 class="text-2xl font-bold text-blue-700 mb-4 text-center">מפת עולם אינטראקטיבית עם יעדים ספותישניים</h3>
+    <svg id="world-map" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" class="mx-auto block max-w-full rounded-lg shadow-lg border border-blue-300 bg-white" style="position: relative;">
+      <path fill="#cbd5e1" stroke="#94a3b8" stroke-width="0.5" d="M200 200c50-30 100-30 150-15c30 15 60 45 90 60c20 15 30 40 40 60c30 55 75 100 125 130c-45 0-95-20-130-40c-60-35-105-80-135-130Z" />
+      <path fill="#cbd5e1" stroke="#94a3b8" stroke-width="0.5" d="M500 150c60 20 130 50 170 70c35 20 60 55 80 80c40 65 80 115 110 130c-45-5-90-35-140-65c-45-25-90-50-120-100Z" />
+
+      <!-- נקודות יעד -->
+      <circle class="destination-dot" cx="340" cy="120" r="10" data-name="חדר הילדים" />
+      <circle class="destination-dot" cx="150" cy="90" r="10" data-name="הגג" />
+      <circle class="destination-dot" cx="180" cy="230" r="10" data-name="המטבח" />
+      <circle class="destination-dot" cx="390" cy="230" r="10" data-name="החדר של ללי" />
+      <circle class="destination-dot" cx="460" cy="230" r="10" data-name="החדר של מוטי" />
+      <circle class="destination-dot" cx="400" cy="350" r="10" data-name="חדר אורחים" />
+      <circle class="destination-dot" cx="170" cy="370" r="10" data-name="חדר כביסה" />
+
+      <!-- קו חיבור בין נקודות -->
+      <line id="connectionLine" x1="0" y1="0" x2="0" y2="0" stroke="orange" stroke-width="4" style="display:none;" />
+    </svg>
+    <div id="lineInfo"></div>
+    <p class="text-center text-sm mt-2 text-gray-600">בחרו שני יעדים במפה כדי לראות קו טיסה ועלות משוערת.</p>
+  </section>
+
+  <!-- על החברה -->
+  <section id="about" class="mb-16 bg-white rounded-xl shadow p-6">
+    <h3 class="text-2xl font-bold text-blue-700 mb-4">על החברה</h3>
+    <p>
+      ספותישן בע"מ נוסדה בשנת 2025 על ידי אפרת שפירא, מייסדת ומנכ"לית החברה. מאז הקמתה, ספותישן מתמחה בטיסות מסורתיות ולא מסורתיות בין חדרים, גגות ומטבחים עם המון אהבה לנוחות, דמיון וכריות.
+    </p>
+    <h4 class="text-xl font-semibold mt-4 mb-2">צוות הנהלה</h4>
+    <ul class="list-disc pr-6 text-gray-700">
+      <li>אפרת שפירא – מייסדת, מנכ"לית וקברניט ראשי</li>
+      <li>דובון בובי – סמנכ"ל נוחות ושינה</li>
+      <li>כרית נוי – מנהלת שירות לקוחות</li>
+      <li>שמיכת פוך – אחראית בטיחות ונחיתה רכה</li>
+    </ul>
+  </section>
+
+  <!-- נוסע מתמיד -->
+  <section id="frequent" class="mb-16 bg-blue-50 rounded-xl shadow p-6">
+    <h3 class="text-2xl font-bold text-blue-700 mb-4">מועדון נוסע מתמיד – "רב־שוכב"</h3>
+    <p>הרשמו וקבלו נקודות על כל טיסה! ניתן להמיר נקודות לכריות ממותגות, שמיכות ואקססוריז.</p>
+
+    <form id="frequentForm" class="mt-4 grid md:grid-cols-2 gap-6">
+      <div>
+        <label class="block mb-1 font-semibold" for="ffName">שם מלא</label>
+        <input id="ffName" required class="w-full border border-gray-300 rounded p-2" />
+      </div>
+      <div>
+        <label class="block mb-1 font-semibold" for="ffEmail">מייל (אופציונלי)</label>
+        <input id="ffEmail" class="w-full border border-gray-300 rounded p-2" />
+      </div>
+      <div class="md:col-span-2 flex gap-4">
+        <button type="submit" class="bg-blue-700 text-white rounded py-2 px-6 font-bold hover:bg-blue-800 transition">הצטרף למועדון</button>
+        <button type="button" id="ffViewBtn" class="bg-yellow-400 text-black rounded py-2 px-6 font-bold hover:bg-yellow-500 transition">הצג נקודות</button>
+      </div>
+    </form>
+
+    <div id="ffList" class="mt-4 text-gray-700">
+      אין חברים עדיין. הירשם כדי לצבור נקודות.
+    </div>
+  </section>
+
+  <!-- הזמנת טיסה -->
+  <section id="booking" class="mb-16 bg-white rounded-xl shadow p-6">
+    <h3 class="text-2xl font-bold text-blue-700 mb-4">הזמנת טיסה</h3>
+    <p>בחר יעד, מחלקה ושעת המראה כדי לקבל כרטיס טיסה מיוחד.</p>
+
+    <form id="bookingForm" class="mt-4 grid md:grid-cols-2 gap-6">
+      <div>
+        <label for="bookName" class="block mb-1 font-semibold">שם מלא</label>
+        <input id="bookName" required class="w-full border border-gray-300 rounded p-2" />
+      </div>
+      <div>
+        <label for="bookDest" class="block mb-1 font-semibold">יעד</label>
+        <select id="bookDest" class="w-full border border-gray-300 rounded p-2">
+          <option>חדר הילדים</option>
+          <option>הגג</option>
+          <option>המטבח</option>
+          <option>החדר של ללי</option>
+          <option>החדר של מוטי</option>
+          <option>חדר אורחים</option>
+          <option>חדר כביסה</option>
+        </select>
+      </div>
+      <div>
+        <label for="bookClass" class="block mb-1 font-semibold">מחלקה</label>
+        <select id="bookClass" class="w-full border border-gray-300 rounded p-2">
+          <option>מחלקת כריות</option>
+          <option>מחלקת שמיכות</option>
+          <option>מחלקת רגליים על השולחן</option>
+        </select>
+      </div>
+      <div>
+        <label for="bookTime" class="block mb-1 font-semibold">שעת המראה רצויה</label>
+        <input id="bookTime" type="time" class="w-full border border-gray-300 rounded p-2" />
+      </div>
+      <div class="md:col-span-2">
+        <button type="submit" class="bg-yellow-400 text-black rounded py-3 px-6 font-bold hover:bg-yellow-500 transition">
+          הזמן והשג כרטיס
+        </button>
+      </div>
+    </form>
+  </section>
+
+</main>
+
+<!-- מודאל כרטיס טיסה -->
+<div id="ticketModal" class="flex">
+  <div id="ticketContent">
+    <h4 class="text-xl font-bold mb-4">כרטיס טיסה - ספותישן בע"מ</h4>
+    <div id="ticketDetails"></div>
+    <button id="printTicket" class="print-btn">הדפס כרטיס טיסה</button>
+    <button id="closeTicket" class="mt-3 bg-gray-200 text-black hover:bg-gray-300 rounded px-4 py-2 font-semibold w-full">סגור</button>
+  </div>
+</div>
+
+<!-- מודאל נקודות מועדון -->
+<div id="printPointsModal" class="flex">
+  <div id="pointsContent">
+    <h4 class="text-xl font-bold mb-4">נקודות נוסע מתמיד</h4>
+    <div id="pointsList"></div>
+    <button id="printPoints" class="print-btn">הדפס נקודות</button>
+    <button id="closePoints" class="mt-3 bg-gray-200 text-black hover:bg-gray-300 rounded px-4 py-2 font-semibold w-full">סגור</button>
+  </div>
+</div>
+
+<footer class="text-center p-6 text-gray-500 text-sm select-none">
+  © 2025 ספותישן בע"מ - כל הזכויות שמורות
+</footer>
+
+<script>
+  // ניווט חלק
+  function scrollToSection(id) {
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // נתוני טיסות ראשוניים
+  let flights = [
+    { code: 'SPT101', dest: 'חדר הילדים', depart: '10:00', arrive: '10:03', status: 'בזמן' },
+    { code: 'SPT202', dest: 'הגג', depart: '11:15', arrive: '11:20', status: 'בהמתנה' },
+    { code: 'SPT303', dest: 'המטבח', depart: '12:00', arrive: '12:02', status: 'מבוטלת' },
+  ];
+
+  // הצגת לוח טיסות
+  const flightsBody = document.getElementById('flightsBody');
+  function renderFlights() {
+    flightsBody.innerHTML = '';
+    flights.forEach(f => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="border border-gray-300 p-2">${f.code}</td>
+        <td class="border border-gray-300 p-2">${f.dest}</td>
+        <td class="border border-gray-300 p-2">${f.depart}</td>
+        <td class="border border-gray-300 p-2">${f.arrive}</td>
+        <td class="border border-gray-300 p-2">${f.status}</td>
+      `;
+      flightsBody.appendChild(tr);
+    });
+  }
+  renderFlights();
+
+  // מידע יעדים למפה
+  const destinationsInfo = {
+    "חדר הילדים": { desc: "טיסה מהירה ונוחה לחדר הילדים עם כריות פלוס ומשחקים!", time: "3 דקות", cx:340, cy:120 },
+    "הגג": { desc: "הגעה לגג עם נוף פתוח ושמש נעימה, מושלם להירגעות.", time: "5 דקות", cx:150, cy:90 },
+    "המטבח": { desc: "טיסה קצרה למטבח, הטעם הטוב מובטח עם כרית חמה.", time: "2 דקות", cx:180, cy:230 },
+    "החדר של ללי": { desc: "חדר מיוחד עם מיטה מפנקת וניחוחות נעימים.", time: "4 דקות", cx:390, cy:230 },
+    "החדר של מוטי": { desc: "חדר נעים עם ספה רחבה לשינה מתוקה.", time: "4 דקות", cx:460, cy:230 },
+    "חדר אורחים": { desc: "חדר אורחים שמחכה לארח אתכם בנוחות וסטייל.", time: "6 דקות", cx:400, cy:350 },
+    "חדר כביסה": { desc: "היעד הטוב ביותר למי שמחפש נקיון וארגון מושלם.", time: "7 דקות", cx:170, cy:370 }
+  };
+
+  const infoBox = document.getElementById('infoBox');
+
+  // ניהול בחירת יעדים לציור קו במפה
+  let selectedDestinations = [];
+
+  // רפרנסים למפה ולקו
+  const worldMap = document.getElementById('world-map');
+  const connectionLine = document.getElementById('connectionLine');
+  const lineInfo = document.getElementById('lineInfo');
+
+  // הצגת מידע יעד בלחיצה והוספה לבחירת קו
+  document.querySelectorAll('.destination-dot').forEach(dot => {
+    dot.addEventListener('click', e => {
+      const name = e.target.getAttribute('data-name');
+      const info = destinationsInfo[name];
+      // הצגת תיבת מידע
+      showInfoBox(name, info);
+
+      // הוספה לבחירת יעדים לציור קו
+      if (selectedDestinations.length < 2 && !selectedDestinations.includes(name)) {
+        selectedDestinations.push(name);
+      } else if (selectedDestinations.includes(name)) {
+        // אם כבר נבחר - הסר אותו
+        selectedDestinations = selectedDestinations.filter(d => d !== name);
+      } else {
+        // אם כבר יש 2 - נחליף את הראשונה
+        selectedDestinations.shift();
+        selectedDestinations.push(name);
+      }
+      drawConnectionLine();
+    });
+  });
+
+  // פונקציה להראות תיבת מידע יעד
+  function showInfoBox(name, info) {
+    infoBox.style.display = 'block';
+    infoBox.innerHTML = `
+      <h4 class="text-xl font-bold mb-2">${name}</h4>
+      <p>${info.desc}</p>
+      <p class="mt-1 font-semibold">משך טיסה: ${info.time}</p>
+      <button onclick="bookFromMap('${name}')">הזמן טיסה ליעד זה</button>
+    `;
+  }
+
+  // הסתרת תיבת מידע אם לוחצים מחוץ לה
+  window.addEventListener('click', e => {
+    if (!infoBox.contains(e.target) && !e.target.classList.contains('destination-dot')) {
+      infoBox.style.display = 'none';
+    }
+  });
+
+  // פונקציה להזמנה מהמפה (מעבירה לקטע הזמנה)
+  function bookFromMap(dest) {
+    infoBox.style.display = 'none';
+    scrollToSection('booking');
+    document.getElementById('bookDest').value = dest;
+  }
+
+  // פונקציה לציור קו בין שתי נקודות במפה
+  function drawConnectionLine() {
+    if (selectedDestinations.length !== 2) {
+      connectionLine.style.display = 'none';
+      lineInfo.textContent = '';
+      return;
+    }
+    const [startName, endName] = selectedDestinations;
+    const start = destinationsInfo[startName];
+    const end = destinationsInfo[endName];
+
+    connectionLine.setAttribute('x1', start.cx);
+    connectionLine.setAttribute('y1', start.cy);
+    connectionLine.setAttribute('x2', end.cx);
+    connectionLine.setAttribute('y2', end.cy);
+    connectionLine.style.display = 'block';
+
+    // חישוב "מרחק" פיקטיבי (לדוגמה לפי פיתגורס)
+    const dx = end.cx - start.cx;
+    const dy = end.cy - start.cy;
+    const distPixels = Math.sqrt(dx * dx + dy * dy);
+    // חישוב עלות משוערת: למשל 10 נקודות לכל 10 פיקסלים, או 1 נקודה לדקה
+    // או לפי ממוצע זמן של שני היעדים
+    const avgTime = (parseInt(start.time) + parseInt(end.time)) / 2 || 5; // במקרה ואין מספר, 5 ד'
+    // ניקח עלות לדוגמה: 5 ש"ח לכל דקה טיסה
+    const cost = Math.round(avgTime * 5);
+
+    lineInfo.textContent = `קו טיסה בין "${startName}" ל-"${endName}" — משך משוער: כ-${Math.round(avgTime)} דקות, עלות משוערת: ${cost} ש"ח`;
+  }
+
+  // מועדון נוסע מתמיד
+  const frequentForm = document.getElementById('frequentForm');
+  const ffList = document.getElementById('ffList');
+  let frequentFlyers = [];
+
+  frequentForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('ffName').value.trim();
+    if (!name) return alert('אנא מלא שם מלא');
+    const email = document.getElementById('ffEmail').value.trim();
+    frequentFlyers.push({ name, email, points: 0 });
+    document.getElementById('ffName').value = '';
+    document.getElementById('ffEmail').value = '';
+    alert(`ברוך הבא למועדון, ${name}! נקודות ראשוניות הוכנסו.`);
+    updateFFList();
+  });
+
+  // עדכון תצוגת חברים
+  function updateFFList() {
+    if (frequentFlyers.length === 0) {
+      ffList.textContent = 'אין חברים עדיין. הירשם כדי לצבור נקודות.';
+      return;
+    }
+    ffList.innerHTML = '';
+    frequentFlyers.forEach(f => {
+      const div = document.createElement('div');
+      div.textContent = `${f.name} - נקודות: ${f.points}`;
+      ffList.appendChild(div);
+    });
+  }
+
+  // כפתור הצג נקודות במועדון
+  document.getElementById('ffViewBtn').addEventListener('click', () => {
+    if (frequentFlyers.length === 0) {
+      alert('אין חברים עדיין להצגה.');
+      return;
+    }
+    showPointsModal();
+  });
+
+  // הצגת מודאל נקודות נוסע מתמיד
+  const pointsModal = document.getElementById('printPointsModal');
+  const pointsList = document.getElementById('pointsList');
+  const printPointsBtn = document.getElementById('printPoints');
+  const closePointsBtn = document.getElementById('closePoints');
+
+  function showPointsModal() {
+    pointsList.innerHTML = '';
+    frequentFlyers.forEach(f => {
+      const div = document.createElement('div');
+      div.textContent = `${f.name} - נקודות: ${f.points}`;
+      pointsList.appendChild(div);
+    });
+    pointsModal.style.display = 'flex';
+  }
+
+  closePointsBtn.addEventListener('click', () => {
+    pointsModal.style.display = 'none';
+  });
+
+  printPointsBtn.addEventListener('click', () => {
+    printSection(pointsList.innerHTML);
+  });
+
+  // הזמנת טיסה - טיפול בטופס והצגת כרטיס
+  const bookingForm = document.getElementById('bookingForm');
+  const ticketModal = document.getElementById('ticketModal');
+  const ticketDetails = document.getElementById('ticketDetails');
+  const closeTicketBtn = document.getElementById('closeTicket');
+  const printTicketBtn = document.getElementById('printTicket');
+
+  bookingForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('bookName').value.trim();
+    const dest = document.getElementById('bookDest').value;
+    const cls = document.getElementById('bookClass').value;
+    const time = document.getElementById('bookTime').value || 'לא צוין';
+
+    if (!name) return alert('אנא מלא שם מלא להזמנת הטיסה.');
+
+    // יצירת כרטיס טיסה עם עיצוב פשוט ומידע
+    ticketDetails.innerHTML = `
+      <p>שלום <strong>${name}</strong>!</p>
+      <p>הזמנתך לטיסה ליעד <strong>${dest}</strong> במחלקה: <strong>${cls}</strong></p>
+      <p>שעת המראה: <strong>${time}</strong></p>
+      <p>תודה שבחרת לטוס עם ספותישן בע"מ!</p>
+    `;
+    ticketModal.style.display = 'flex';
+  });
+
+  closeTicketBtn.addEventListener('click', () => {
+    ticketModal.style.display = 'none';
+    bookingForm.reset();
+  });
+
+  // הדפסת כרטיס טיסה
+  printTicketBtn.addEventListener('click', () => {
+    printSection(ticketDetails.innerHTML);
+  });
+
+  // פונקציה להדפסת אזור מסוים
+  function printSection(htmlContent) {
+    const printWindow = window.open('', '', 'width=600,height=400');
+    printWindow.document.write(`
+      <html dir="rtl">
+      <head>
+        <title>הדפסה</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; padding: 20px; color: #1e40af; }
+          h4 { color: #2563eb; }
+        </style>
+      </head>
+      <body>${htmlContent}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  }
+</script>
+
+<!-- תיבת מידע יעדים -->
+<div id="infoBox"></div>
+
+</body>
+</html>
